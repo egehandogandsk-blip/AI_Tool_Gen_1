@@ -34,16 +34,19 @@ Projeyi yerel makinenizde çalıştırmak için:
 
 4.  Tarayıcınızda `http://localhost:3000` adresine gidin.
 
-## 🌍 Netlify veya Vercel'e Dağıtım (Deployment)
+## 🌍 Vercel'e Dağıtım (Deployment) - **ÖNERİLEN**
 
-Bu proje Next.js tabanlı olduğu için **Netlify** veya **Vercel** üzerinde tek tıkla yayınlanabilir.
+Bu proje Next.js ile yapıldığı için Vercel en iyi performansı verecektir.
 
-### Netlify İçin Adımlar:
-1.  **GitHub Reposunu Bağlayın:** Netlify panelinden "New site from Git" seçeneğini seçin.
-2.  **Build Ayarları:**
-    - **Build command:** `npm run build`
-    - **Publish directory:** `.next`
-3.  **Deploy:** "Deploy site" butonuna basın.
+1.  **Vercel'e Girin:** [vercel.com](https://vercel.com) adresine gidin ve GitHub ile giriş yapın.
+2.  **Yeni Proje:** "Add New..." -> "Project" butonuna tıklayın.
+3.  **Repo Seçimi:** `AI_Tool_Gen_1` reposunun yanındaki "Import" butonuna basın.
+4.  **⚠️ ÖNEMLİ AYAR:** "Framework Preset" otomatik olarak Next.js seçilecektir. Ancak **Root Directory** kısmını değiştirmeniz gerekebilir:
+    - **Root Directory:** `Edit` butonuna basın ve `ai-tool` klasörünü seçin.
+5.  **Deploy:** "Deploy" butonuna basın.
+
+### Netlify Dağıtım (Alternatif)
+(Netlify instructions kept as alt) -> Netlify kullanmak isterseniz `netlify.toml` dosyası hazır. Sadece repoyu bağlayıp base directory'yi `ai-tool` olarak ayarlamanız yeterli.
 
 Harika! Web siteniz artık yayında. 🎉
 
