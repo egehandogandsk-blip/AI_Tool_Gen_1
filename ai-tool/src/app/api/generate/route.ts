@@ -1,5 +1,5 @@
 import { experimental_generateImage } from 'ai';
-import { pollinations } from 'ai-sdk-pollinations';
+import { pollinations } from 'ai-pollinations';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
