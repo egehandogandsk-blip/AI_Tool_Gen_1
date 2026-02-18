@@ -23,14 +23,7 @@ export default function Home() {
     try {
       const { imageUrl: url } = generateImageDetails(prompt);
 
-      // Simulate/wait for image to be ready or just set it
-      // Pollinations returns a URL that generates on request. 
-      // We can set it immediately, but the browser will trigger the request when <img src> loads.
-      // To show a loading state, we can use the onLoad event of the image, 
-      // but simpler for now is to just set it and let the ImageDisplay component handle the "loading" visual if possible,
-      // OR we can pre-fetch it.
-
-      // Better UX: Pre-fetch the image to ensure it's generated before showing
+      // Pre-fetch the image to ensure it's generated before showing
       const img = new Image();
       img.src = url;
       img.onload = () => {
@@ -38,7 +31,9 @@ export default function Home() {
         setIsLoading(false);
       };
       img.onerror = () => {
-        setError("Failed to generate image. Please try again.");
+        // Fallback: Try without specific model if flux fails, or just show error
+        console.error("Image load failed");
+        setError("Failed to create image. The server might be busy, please try again.");
         setIsLoading(false);
       };
 
@@ -55,61 +50,54 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden text-white">
-      {/* Background with premium gradient/mesh */}
-      <div className="absolute inset-0 bg-black z-[-2]" />
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-purple-900/20 to-black z-[-1]" />
+    <main className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden text-white bg-black">
+      {/* Ultra Minimal Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-black pointer-events-none" />
 
-      {/* Floating Blobs for aesthetics */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/30 rounded-full blur-[100px] animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[100px] animate-pulse delay-1000" />
+      <div className="z-10 w-full max-w-4xl flex flex-col items-center gap-12">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center space-y-2"
+        >
+          <h1 className="text-4xl md:text-6xl font-light tracking-tight text-white/90">
+            Imagine
+          </h1>
+          <p className="text-white/40 text-sm font-light tracking-widest uppercase">
+            Limitless Creation
+          </p>
+        </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
-      >
-        <h1 className="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/50 mb-4 tracking-tighter">
-          Imagine AI
-        </h1>
-        <p className="text-white/60 text-lg md:text-xl font-light">
-          Unlimited. Free. Instant.
-        </p>
-      </motion.div>
+        <div className="w-full max-w-2xl flex flex-col items-center gap-6">
+          <PromptInput
+            prompt={prompt}
+            setPrompt={setPrompt}
+            onGenerate={handleGenerate}
+          />
 
-      <div className="w-full max-w-3xl flex flex-col items-center gap-8 z-10">
-        <PromptInput
-          prompt={prompt}
-          setPrompt={setPrompt}
-          onGenerate={handleGenerate}
-        />
+          <GenerateButton
+            onClick={handleGenerate}
+            isLoading={isLoading}
+            disabled={!prompt.trim() || isLoading}
+          />
 
-        <GenerateButton
-          onClick={handleGenerate}
-          isLoading={isLoading}
-          disabled={!prompt.trim() || isLoading}
-        />
+          {error && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-red-400 bg-red-950/30 px-6 py-3 rounded-xl border border-red-500/10 text-sm font-light"
+            >
+              {error}
+            </motion.div>
+          )}
 
-        {error && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-red-400 bg-red-900/20 px-4 py-2 rounded-lg border border-red-500/20"
-          >
-            {error}
-          </motion.div>
-        )}
-
-        <ImageDisplay
-          imageUrl={imageUrl}
-          isLoading={isLoading}
-          onClear={handleClear}
-        />
+          <ImageDisplay
+            imageUrl={imageUrl}
+            isLoading={isLoading}
+            onClear={handleClear}
+          />
+        </div>
       </div>
-
-      <footer className="absolute bottom-4 text-white/20 text-sm font-light">
-        Powered by Pollinations.ai • No API Keys Required
-      </footer>
     </main>
   );
 }
