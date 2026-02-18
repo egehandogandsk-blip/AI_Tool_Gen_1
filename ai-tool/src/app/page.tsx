@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { PromptInput } from "@/components/PromptInput";
 import { generateImageDetails } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Maximize2, Share2, Sparkles, Wand2, Ratio } from "lucide-react";
+import { Sparkles, Wand2, Ratio, Image as ImageIcon, Download, Share2 } from "lucide-react";
 
 export default function App() {
   const [prompt, setPrompt] = useState("");
@@ -19,131 +18,183 @@ export default function App() {
 
     setIsLoading(true);
     setError(null);
-    setImageUrl(null);
+    // Keep previous image visible while loading for better UX, or clear it?
+    // User asked for output at top, so better to show loading state there clearly.
+    // Let's clear it to show we are working on a new one.
+    // actually, keeping it is standard behavior until new one arrives.
+    // But let's follow the "generation failed" feedback -> clean slate might be better to see errors.
 
     try {
-      // Modify prompt based on style/ratio (mock logic for now as API is simple)
-      const enhancedPrompt = `${prompt}, ${style} style`;
-      const { imageUrl: url } = generateImageDetails(enhancedPrompt);
+      const fullPrompt = `${prompt}, ${style} style, detailed, high quality`;
+      const { imageUrl: url } = generateImageDetails(fullPrompt, aspectRatio);
 
-      const img = new Image();
-      img.src = url;
-      img.onload = () => {
-        setImageUrl(url);
-        setIsLoading(false);
-      };
-      img.onerror = () => {
-        setError("Failed. Try again.");
-        setIsLoading(false);
-      };
+      // Direct assignment for faster feedback, let the img tag handle the loading visual
+      setImageUrl(url);
+      setIsLoading(true);
 
     } catch (err) {
-      setError("Error occurred.");
+      setError("Failed to start generation.");
       setIsLoading(false);
     }
   };
 
+  const handleImageLoad = () => {
+    setIsLoading(false);
+  };
+
+  const handleImageError = () => {
+    setIsLoading(false);
+    setError("Generation failed. Please try again.");
+  };
+
   return (
-    <div className="min-h-screen bg-black text-white font-sans flex items-center justify-center p-4 relative overflow-hidden selection:bg-purple-500/30">
-      {/* Ambient Moving Background */}
-      <div className="fixed inset-0 z-0 opacity-40 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-900/40 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-blue-900/30 rounded-full blur-[100px] animate-pulse delay-1000" />
-      </div>
+    <div className="min-h-screen bg-[#050505] text-white font-sans flex flex-col items-center justify-start p-4 md:p-8 relative overflow-x-hidden selection:bg-orange-500/30">
 
-      {/* Main App Card - "The Phone" */}
-      <div className="w-full max-w-[480px] h-[85vh] md:h-[800px] bg-[#000000] rounded-[40px] border border-white/10 shadow-2xl relative z-10 flex flex-col overflow-hidden ring-1 ring-white/5">
+      {/* Ambient Background - Gradient */}
+      <div className="fixed inset-0 z-0 pointer-events-none bg-gradient-to-br from-[#1a0b2e] via-[#000000] to-[#0f172a]" />
 
-        {/* Header */}
-        <div className="h-16 flex items-center justify-between px-6 shrink-0 z-20">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-black fill-black" />
-            </div>
-            <span className="font-bold text-lg tracking-tight">Faura</span>
+      {/* Main Content Container - Vertical Stack */}
+      <main className="relative z-10 w-full max-w-[600px] flex flex-col gap-6 mt-4 md:mt-8">
+
+        {/* 1. Header/Logo Area */}
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <div className="bg-white/10 p-2 rounded-xl backdrop-blur-md">
+            <Sparkles className="w-6 h-6 text-orange-400" />
           </div>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 border border-white/10" />
+          <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
+            Imagine
+          </h1>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 relative flex flex-col p-2">
-
-          {/* Image Display Area */}
-          <div className="flex-1 bg-[#0a0a0a] rounded-[32px] overflow-hidden relative border border-white/5 group">
-            <AnimatePresence mode="wait">
-              {isLoading ? (
-                <motion.div
-                  key="loading"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#0a0a0a]"
-                >
-                  <div className="w-20 h-20 relative">
-                    <div className="absolute inset-0 border-4 border-purple-500/30 rounded-full" />
-                    <div className="absolute inset-0 border-4 border-t-purple-500 rounded-full animate-spin" />
-                  </div>
-                  <p className="text-white/40 font-light tracking-widest text-xs uppercase animate-pulse">Generating...</p>
-                </motion.div>
-              ) : imageUrl ? (
-                <motion.div
-                  key="image"
-                  initial={{ opacity: 0, scale: 1.1 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="relative w-full h-full"
-                >
-                  <img src={imageUrl} alt="Result" className="w-full h-full object-cover" />
-
-                  {/* Overlay Controls */}
-                  <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <a href={imageUrl} download className="p-3 bg-black/60 hover:bg-black text-white rounded-full backdrop-blur-md transition-all">
-                      <Download className="w-5 h-5" />
-                    </a>
-                    <button className="p-3 bg-black/60 hover:bg-black text-white rounded-full backdrop-blur-md transition-all">
-                      <Maximize2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                </motion.div>
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 opacity-40">
-                  <Sparkles className="w-12 h-12 mb-4 text-white/20" />
-                  <h3 className="text-xl font-medium mb-1">Create Magic</h3>
-                  <p className="text-sm font-light text-white/50">Type a prompt below to start generating images instantly.</p>
+        {/* 2. Image Output (Top) */}
+        <div className="w-full aspect-[4/3] sm:aspect-square bg-[#121212] rounded-[32px] border border-white/5 overflow-hidden relative shadow-2xl group transition-all duration-500 hover:border-white/10">
+          {imageUrl ? (
+            <>
+              <img
+                src={imageUrl}
+                alt="Generated AI Art"
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+                className={`w-full h-full object-contain bg-black/50 transition-opacity duration-500 ${isLoading ? 'opacity-50 blur-sm' : 'opacity-100'}`}
+              />
+              {isLoading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4" />
+                  <span className="text-white/50 text-sm font-light animate-pulse">Creating Magic...</span>
                 </div>
               )}
-            </AnimatePresence>
-
-            {error && (
-              <div className="absolute top-4 left-4 right-4 bg-red-500/20 text-red-200 p-3 rounded-xl border border-red-500/20 text-xs text-center backdrop-blur-md">
-                {error}
+              {!isLoading && (
+                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <a href={imageUrl} download className="p-3 bg-black/60 hover:bg-white hover:text-black text-white rounded-full backdrop-blur-md transition-all">
+                    <Download className="w-5 h-5" />
+                  </a>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white/20">
+              <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                <ImageIcon className="w-10 h-10" />
               </div>
-            )}
+              <p className="font-light text-sm">Your creation will appear here</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-20">
+              <div className="bg-red-500/10 border border-red-500/20 text-red-200 px-6 py-4 rounded-xl text-center max-w-[80%]">
+                <p className="mb-2 font-medium">Generation Failed</p>
+                <p className="text-xs opacity-70 mb-4">{error}</p>
+                <button
+                  onClick={() => setError(null)}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 3. Controls (Middle) - Style & Ratio */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Style Selector */}
+          <div className="bg-[#121212] rounded-2xl p-4 border border-white/5">
+            <div className="flex items-center gap-2 mb-3 text-white/50 text-xs uppercase tracking-wider font-semibold">
+              <Wand2 className="w-3 h-3" />
+              Style
+            </div>
+            <div className="flex gap-2 bg-black/40 p-1 rounded-xl">
+              {['Realistic', 'Cartoon', 'Ultra'].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setStyle(s === 'Ultra' ? 'Ultrarealistic' : s)}
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-300 ${(style === s || (s === 'Ultra' && style === 'Ultrarealistic'))
+                      ? 'bg-white/10 text-white shadow-lg'
+                      : 'text-white/40 hover:text-white hover:bg-white/5'
+                    }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Controls & Input Area */}
-          <div className="mt-4 px-2 pb-4 space-y-4">
-
-            {/* Pills (Model / Style / Ratio) */}
-            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-              <button className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] hover:bg-[#252525] rounded-full border border-white/5 text-xs text-gray-300 transition-colors shrink-0">
-                <Wand2 className="w-3 h-3" />
-                <span>Style: {style}</span>
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] hover:bg-[#252525] rounded-full border border-white/5 text-xs text-gray-300 transition-colors shrink-0">
-                <Ratio className="w-3 h-3" />
-                <span>Ratio: {aspectRatio}</span>
-              </button>
+          {/* Aspect Ratio Selector */}
+          <div className="bg-[#121212] rounded-2xl p-4 border border-white/5">
+            <div className="flex items-center gap-2 mb-3 text-white/50 text-xs uppercase tracking-wider font-semibold">
+              <Ratio className="w-3 h-3" />
+              Ratio
             </div>
-
-            <PromptInput
-              prompt={prompt}
-              setPrompt={setPrompt}
-              onGenerate={handleGenerate}
-              isLoading={isLoading}
-            />
+            <div className="flex gap-2 bg-black/40 p-1 rounded-xl">
+              {['1:1', '16:9', '9:16'].map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setAspectRatio(r)}
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-300 ${aspectRatio === r
+                      ? 'bg-white/10 text-white shadow-lg'
+                      : 'text-white/40 hover:text-white hover:bg-white/5'
+                    }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+
+        {/* 4. Prompt Input (Bottom-ish) */}
+        <div className="bg-[#121212] rounded-[24px] p-1 border border-white/5 focus-within:border-orange-500/50 transition-colors duration-300">
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Describe your imagination..."
+            className="w-full bg-transparent text-white placeholder-white/30 text-lg p-5 outline-none resize-none min-h-[120px] font-light leading-relaxed rounded-[20px]"
+          />
+        </div>
+
+        {/* 5. Generate Button (Bottom) */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleGenerate}
+          disabled={!prompt.trim() || isLoading}
+          className={`
+                    w-full py-5 rounded-2xl font-bold text-lg tracking-wide uppercase shadow-lg transition-all duration-300 relative overflow-hidden group
+                    ${!prompt.trim() || isLoading
+              ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+              : 'bg-orange-600 hover:bg-orange-500 text-white shadow-orange-900/20'
+            }
+                `}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+          <span className="relative flex items-center justify-center gap-3">
+            {isLoading ? 'Dreaming...' : 'Generate Image'}
+            {!isLoading && <Sparkles className="w-5 h-5" />}
+          </span>
+        </motion.button>
+
+      </main>
     </div>
   );
 }
