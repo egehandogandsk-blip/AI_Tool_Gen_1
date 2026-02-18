@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Sidebar } from "@/components/Sidebar";
-import { SettingsPanel } from "@/components/SettingsPanel";
+import { PromptInput } from "@/components/PromptInput";
 import { generateImageDetails } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Maximize2, X } from "lucide-react";
+import { Download, Maximize2, Share2, Sparkles, Wand2, Ratio } from "lucide-react";
 
-export default function Dashboard() {
+export default function App() {
   const [prompt, setPrompt] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aspectRatio, setAspectRatio] = useState("1:1");
+  const [style, setStyle] = useState("Realistic");
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -21,7 +22,9 @@ export default function Dashboard() {
     setImageUrl(null);
 
     try {
-      const { imageUrl: url } = generateImageDetails(prompt);
+      // Modify prompt based on style/ratio (mock logic for now as API is simple)
+      const enhancedPrompt = `${prompt}, ${style} style`;
+      const { imageUrl: url } = generateImageDetails(enhancedPrompt);
 
       const img = new Image();
       img.src = url;
@@ -30,88 +33,115 @@ export default function Dashboard() {
         setIsLoading(false);
       };
       img.onerror = () => {
-        setError("Failed to create image. The server might be busy, please try again.");
+        setError("Failed. Try again.");
         setIsLoading(false);
       };
 
     } catch (err) {
-      setError("An unexpected error occurred.");
+      setError("Error occurred.");
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-black text-white font-sans selection:bg-white/20">
-      <Sidebar />
+    <div className="min-h-screen bg-black text-white font-sans flex items-center justify-center p-4 relative overflow-hidden selection:bg-purple-500/30">
+      {/* Ambient Moving Background */}
+      <div className="fixed inset-0 z-0 opacity-40 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-900/40 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-blue-900/30 rounded-full blur-[100px] animate-pulse delay-1000" />
+      </div>
 
-      <div className="flex-1 flex flex-col md:flex-row ml-0 md:ml-20">
-        {/* Left Panel - Input & Controls */}
-        <SettingsPanel
-          prompt={prompt}
-          setPrompt={setPrompt}
-          onGenerate={handleGenerate}
-          isLoading={isLoading}
-        />
+      {/* Main App Card - "The Phone" */}
+      <div className="w-full max-w-[480px] h-[85vh] md:h-[800px] bg-[#000000] rounded-[40px] border border-white/10 shadow-2xl relative z-10 flex flex-col overflow-hidden ring-1 ring-white/5">
 
-        {/* Right Panel - Preview & Gallery */}
-        <div className="flex-1 bg-[#050505] relative flex items-center justify-center p-8 overflow-hidden">
+        {/* Header */}
+        <div className="h-16 flex items-center justify-between px-6 shrink-0 z-20">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-black fill-black" />
+            </div>
+            <span className="font-bold text-lg tracking-tight">Faura</span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 border border-white/10" />
+        </div>
 
-          {/* Background Mesh Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-black to-blue-900/10 pointer-events-none" />
+        {/* Content Area */}
+        <div className="flex-1 relative flex flex-col p-2">
 
-          <AnimatePresence mode="wait">
-            {isLoading ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col items-center gap-4"
-              >
-                <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-                <p className="text-white/40 tracking-widest font-light text-sm uppercase">Creating Masterpiece...</p>
-              </motion.div>
-            ) : imageUrl ? (
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="relative group max-w-4xl w-full h-[80vh] bg-[#111] rounded-3xl overflow-hidden shadow-2xl border border-white/5"
-              >
-                <img
-                  src={imageUrl}
-                  alt="Generated AI Art"
-                  className="w-full h-full object-contain bg-black/50"
-                />
+          {/* Image Display Area */}
+          <div className="flex-1 bg-[#0a0a0a] rounded-[32px] overflow-hidden relative border border-white/5 group">
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#0a0a0a]"
+                >
+                  <div className="w-20 h-20 relative">
+                    <div className="absolute inset-0 border-4 border-purple-500/30 rounded-full" />
+                    <div className="absolute inset-0 border-4 border-t-purple-500 rounded-full animate-spin" />
+                  </div>
+                  <p className="text-white/40 font-light tracking-widest text-xs uppercase animate-pulse">Generating...</p>
+                </motion.div>
+              ) : imageUrl ? (
+                <motion.div
+                  key="image"
+                  initial={{ opacity: 0, scale: 1.1 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative w-full h-full"
+                >
+                  <img src={imageUrl} alt="Result" className="w-full h-full object-cover" />
 
-                {/* Overlay Utility Bar */}
-                <div className="absolute top-6 right-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <a
-                    href={imageUrl}
-                    download={`imagine-ai-${Date.now()}.png`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-3 bg-black/50 hover:bg-white text-white hover:text-black backdrop-blur-md rounded-full transition-all border border-white/10"
-                  >
-                    <Download className="w-5 h-5" />
-                  </a>
-                  <button className="p-3 bg-black/50 hover:bg-white text-white hover:text-black backdrop-blur-md rounded-full transition-all border border-white/10">
-                    <Maximize2 className="w-5 h-5" />
-                  </button>
+                  {/* Overlay Controls */}
+                  <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a href={imageUrl} download className="p-3 bg-black/60 hover:bg-black text-white rounded-full backdrop-blur-md transition-all">
+                      <Download className="w-5 h-5" />
+                    </a>
+                    <button className="p-3 bg-black/60 hover:bg-black text-white rounded-full backdrop-blur-md transition-all">
+                      <Maximize2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </motion.div>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 opacity-40">
+                  <Sparkles className="w-12 h-12 mb-4 text-white/20" />
+                  <h3 className="text-xl font-medium mb-1">Create Magic</h3>
+                  <p className="text-sm font-light text-white/50">Type a prompt below to start generating images instantly.</p>
                 </div>
-              </motion.div>
-            ) : (
-              <div className="text-center opacity-30 select-none pointer-events-none">
-                <div className="w-96 h-96 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full blur-[120px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10" />
-                <h2 className="text-4xl font-bold mb-2">Ready to Create?</h2>
-                <p className="font-light">Describe your vision in the panel on the left.</p>
+              )}
+            </AnimatePresence>
+
+            {error && (
+              <div className="absolute top-4 left-4 right-4 bg-red-500/20 text-red-200 p-3 rounded-xl border border-red-500/20 text-xs text-center backdrop-blur-md">
+                {error}
               </div>
             )}
-          </AnimatePresence>
+          </div>
 
-          {error && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-red-500/10 border border-red-500/20 text-red-400 px-6 py-3 rounded-xl backdrop-blur-md">
-              {error}
+          {/* Controls & Input Area */}
+          <div className="mt-4 px-2 pb-4 space-y-4">
+
+            {/* Pills (Model / Style / Ratio) */}
+            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+              <button className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] hover:bg-[#252525] rounded-full border border-white/5 text-xs text-gray-300 transition-colors shrink-0">
+                <Wand2 className="w-3 h-3" />
+                <span>Style: {style}</span>
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] hover:bg-[#252525] rounded-full border border-white/5 text-xs text-gray-300 transition-colors shrink-0">
+                <Ratio className="w-3 h-3" />
+                <span>Ratio: {aspectRatio}</span>
+              </button>
             </div>
-          )}
+
+            <PromptInput
+              prompt={prompt}
+              setPrompt={setPrompt}
+              onGenerate={handleGenerate}
+              isLoading={isLoading}
+            />
+          </div>
         </div>
       </div>
     </div>
